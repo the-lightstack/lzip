@@ -3,6 +3,7 @@ import sys
 import bitstream
 from bitstream import BitStream
 import json
+import struct
 
 
 class Node:
@@ -105,12 +106,8 @@ def createTree(file_contents):
 	return nodes_list[0]
 
 def cleanWrite(stream,string):
-	for i in string:
-		stream.write(bool(int(i)),bool)
-
-def cleanIntWrite(stream,inter):
-	s = str(bin(inter))[2:]
-	cleanWrite(stream,s)
+    for i in string:
+        stream.write(bool(int(i)),bool)
 
 def zipContent(tree,data):
 	#print(tree.find(sys.argv[2]))
@@ -152,7 +149,7 @@ def binTreeToBinary(tree):
 		# It is a leaf node
 		if node.letter:
 			serializedTree.write(True)	
-			cleanIntWrite(serializedTree,node.letter)
+			serializedTree.write(node.letter.to_bytes(1,"big"))
 		else:
 			serializedTree.write(False)
 			recGenBinary(node.child1)
@@ -166,7 +163,7 @@ def binTreeToBinary(tree):
 	fillersLeft = a-((a//8+1)*8) # Will yield negative number
 	filler = BitStream()	
 	for i in range(-fillersLeft):
-		filler.write(False)
+		filler.write(True)
 	print("filler:",filler)
 	print("Length of tree:",len(serializedTree))	
 	filler.write(serializedTree)
@@ -178,7 +175,7 @@ def treeFromSerialized(stream):
 	# All nodes will have a value of -1
 
 	def decodeChild(stream):
-		identifier = bool(stream.read(1))	
+		identifier = stream.read(bool,1)[0]
 		if identifier:
 			node = Node(-1,None,None,stream.read(bytes,1))	
 			return node
@@ -187,10 +184,20 @@ def treeFromSerialized(stream):
 			return node
 	# Doing this since we don't have to manually create root node 
 	while True:
-		if bool(stream.read(1)) == True:
+		if stream.read(bool,1)[0] == False:
 			break
 	tree = Node(-1,decodeChild(stream),decodeChild(stream),None)
 	return tree
+
+
+	def compressData(data):
+		# Create Tree with data
+		tree = createTree(data)
+
+		# Get zipped data
+		zipped = zipContent(tree,data)	
+		
+		
 		
 
 def main():
@@ -210,7 +217,6 @@ def main():
 	binTree = binTreeToBinary(tree)
 	with open("binary_tree_serialzed.bt","wb") as f:
 		a = binTree.read(bytes)
-		print(a)
 		f.write(a)
 	
 	with open("binary_tree_serialzed.bt","rb") as f:
@@ -218,9 +224,7 @@ def main():
 		treeModel = BitStream(data)
 	
 	desTree = treeFromSerialized(treeModel)
-	desTree.display()
-	print("Both streams are equal:",a == data)
-	print("Both trees equal:",desTree == tree)
+	print(desTree.child1.child2.child1.letter)
 
 	
 	
