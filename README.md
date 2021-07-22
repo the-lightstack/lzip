@@ -17,7 +17,7 @@ n bytes - The actual encoded data using the tree
 # Installation
 
 	git clone https://github.com/the-lightstack/lzip.git
-	sudo mv ./lzip /usr/bin
+	sudo mv ./lzip/lzip /usr/bin
 
 
 # Usage 
