@@ -5,6 +5,7 @@ from bitstream import BitStream
 import json
 import struct
 
+MAGIC_BYTE = b"\x23"
 
 class Node:
 	current_traversal = ""
@@ -208,6 +209,7 @@ def compressData(data):
 		
 	# Creating Output stream
 	zip_file = BitStream()
+	zip_file.write(MAGIC_BYTE)
 	# Writing bits for alignment to be read
 	zip_file.write(data_align_bits.to_bytes(1,"big"))
 	# Putting actual alignment bits in stream
@@ -248,6 +250,10 @@ def decompressDataTree(tree,stream):
 def uncompressData(data):
 	stream = BitStream(data)
 
+	magic_byte = stream.read(bytes,1)
+	if magic_byte != MAGIC_BYTE:
+		exit("Not a lzip file!")
+
 	_r_data = stream.read(bytes,1)
 	print("Reading one byte (align length)")
 	alignment_bits_len = int.from_bytes(_r_data,"big")
@@ -273,7 +279,6 @@ def uncompressData(data):
 	plain_data = decompressDataTree(tree,zipped_data)
 	
 	return plain_data		
-	
 	
 	
 	
