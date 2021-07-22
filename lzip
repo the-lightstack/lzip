@@ -2,7 +2,6 @@
 import sys
 import bitstream
 from bitstream import BitStream
-import json
 import struct
 
 MAGIC_BYTE = b"\x23"
@@ -115,7 +114,7 @@ def zipContent(tree,data):
 	for i in data:
 		cleanWrite(zipped,tree.find(i))		
 
-	print("zipContent ",zipped)
+	#print("zipContent ",zipped)
 	return zipped
 
 def dindDeepness(tree):
@@ -164,7 +163,7 @@ def binTreeToBinary(tree):
 	for i in range(-fillersLeft):
 		filler.write(True)
 	#print("filler:",filler)
-	print("Length of tree:",len(serializedTree))	
+	#print("Length of tree:",len(serializedTree))	
 	filler.write(serializedTree)
 
 	return filler
@@ -195,16 +194,16 @@ def compressData(data):
 	# Serialize Tree
 	serialized_tree = binTreeToBinary(tree)
 	length_of_tree = len(serialized_tree)//8	
-	print("Length of serialized Tree:",length_of_tree)
+	#print("Length of serialized Tree:",length_of_tree)
 
 	# Get zipped data
 	zipped = zipContent(tree,data)	
-	print("compressing length of zipped data:",len(zipped))
+	#print("compressing length of zipped data:",len(zipped))
 
 	# Data alignment bits	
 	a = len(zipped)
 	data_align_bits = -(a-((a//8+1)*8))
-	print("Data alignment bits:",data_align_bits)
+	#print("Data alignment bits:",data_align_bits)
 	
 		
 	# Creating Output stream
@@ -255,26 +254,26 @@ def uncompressData(data):
 		exit("Not a lzip file!")
 
 	_r_data = stream.read(bytes,1)
-	print("Reading one byte (align length)")
+	#print("Reading one byte (align length)")
 	alignment_bits_len = int.from_bytes(_r_data,"big")
 
-	print("Reading ",alignment_bits_len,"bits (byte alignment)")
+	#print("Reading ",alignment_bits_len,"bits (byte alignment)")
 	for i in range(alignment_bits_len):
 		# Means alignment bit is wrong
 		if stream.read(bool,1)[0] == True: 
 			print("ERROR OCCURED, Alignment bit was 1")
-	print("Reading two bytes (length of bin tree)")
+	#print("Reading two bytes (length of bin tree)")
 	bin_tree_length = struct.unpack(">H",stream.read(bytes,2))[0]
-	print("Length of binary tree")
+	#print("Length of binary tree")
 
 	tree_stream = stream.read(bin_tree_length*8)
 	tree = treeFromSerialized(tree_stream)
-	print("t.c1.c1.l",tree.child1.child1.letter)
+	#print("t.c1.c1.l",tree.child1.child1.letter)
 	
 	# Reading rest of data	
-	print("Reading rest of data")
+	#print("Reading rest of data")
 	zipped_data = stream.read()
-	print("Length of zpped data:",len(zipped_data))
+	#print("Length of zpped data:",len(zipped_data))
 
 	plain_data = decompressDataTree(tree,zipped_data)
 	
@@ -284,43 +283,70 @@ def uncompressData(data):
 	
 
 def main():
-	try:
-		sample_file = sys.argv[2]
-	except:
-		exit("You have to supply file to be compressed.")
-	with open(sample_file,"rb") as f:
+
+	if "-h" in sys.argv:
+		print("""Help page for lzip
+-d <filename> –– Decompress .lzip file
+-c <filename> –– Compress any file to .lzip file
+-o <filename> –– Set output file
+""")
+		exit()
+	
+	if not "-c" in sys.argv and not "-d" in sys.argv:
+		exit("You have to either compress or decompress.")
+	
+	if "-c" in sys.argv and "-d" in sys.argv:
+		exit("Either compress or decompress, don't do both at the same time :)")
+
+	input_filename = None
+	output_filename = None
+	action = None # c/d
+	for i in range(len(sys.argv)):
+		if sys.argv[i].strip() == "-c":
+			try:
+				action = "c"
+				input_filename = sys.argv[i+1]
+			except IndexError:
+				exit("You have to supply a file after -c/-d")
+
+		elif sys.argv[i].strip() == "-d":
+			try:
+				input_filename = sys.argv[i+1]
+				action = "d"
+			except IndexError:
+				exit("You have to supply a file after -c/-d")
+		elif sys.argv[i].strip() == "-o":
+			try:
+				output_filename = sys.argv[i+1]	
+			except IndexError:
+				exit("You have to supply a filename after -o")
+	if not output_filename: 
+		if action == "c":
+			output_filename = "out.lzip"
+		elif action == "d":
+			output_filename = "plain_data.bin"
+
+	# Doing actual operations on file	
+	with open(input_filename,"rb") as f:
 		sample_file_contents = f.read()
-	'''	
-	tree = createTree(sample_file_contents)
-	tree.display()
-	zipped = zipContent(tree,sample_file_contents)	
 	
-	print("Type of shit:",type(tree.child1.child1.letter))
-
-	binTree = binTreeToBinary(tree)
-	with open("binary_tree_serialzed.bt","wb") as f:
-		a = binTree.read(bytes)
-		f.write(a)
-	
-	with open("binary_tree_serialzed.bt","rb") as f:
-		data = f.read() 
-		treeModel = BitStream(data)
-	
-	desTree = treeFromSerialized(treeModel)
-	print(desTree.child1.child2.child1.letter)
-	'''
-
-	
-	if sys.argv[1] == "-c":
+	if action == "c":
 		comp_data = compressData(sample_file_contents)
-		with open("out.lzip","wb") as f:
+
+		# Printing file reduction
+		final_size = len(comp_data)
+		init_size = len(sample_file_contents)
+		decrease = round((1-(final_size/init_size))*100,3)
+		print("{} : Size decreased by {}%".format(input_filename,decrease))
+		
+		with open(output_filename,"wb") as f:
 			f.write(comp_data)
 
-	elif sys.argv[1] == "-d":
-		with open(sample_file,"rb") as f:
+	elif action == "d":
+		with open(input_filename,"rb") as f:
 			decomp_data = f.read()
 		plain_data = uncompressData(decomp_data)	
-		with open("plain_data.bin","wb") as f:
+		with open(output_filename,"wb") as f:
 			f.write(plain_data)
 		
 	
