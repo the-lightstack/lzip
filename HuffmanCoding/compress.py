@@ -110,12 +110,10 @@ def cleanWrite(stream,string):
         stream.write(bool(int(i)),bool)
 
 def zipContent(tree,data):
-	#print(tree.find(sys.argv[2]))
 	zipped = BitStream()
 	for i in data:
 		cleanWrite(zipped,tree.find(i))		
 
-	print(zipped)
 	return zipped
 
 def dindDeepness(tree):
@@ -133,7 +131,6 @@ def dindDeepness(tree):
 			recFindDeep(node.child2,own_score)
 
 	recFindDeep(tree,0)
-	print("Deepness of tree:",deepest)
 	return deepest
 	
 
@@ -155,7 +152,7 @@ def binTreeToBinary(tree):
 			recGenBinary(node.child1)
 			recGenBinary(node.child2)
 	recGenBinary(node)
-	print(serializedTree)
+	#print(serializedTree)
 
 
 	# Filling up bits before 1 until it is divisible by 8
@@ -164,7 +161,7 @@ def binTreeToBinary(tree):
 	filler = BitStream()	
 	for i in range(-fillersLeft):
 		filler.write(True)
-	print("filler:",filler)
+	#print("filler:",filler)
 	print("Length of tree:",len(serializedTree))	
 	filler.write(serializedTree)
 
@@ -190,24 +187,103 @@ def treeFromSerialized(stream):
 	return tree
 
 
-	def compressData(data):
-		# Create Tree with data
-		tree = createTree(data)
+def compressData(data):
+	# Create Tree with data
+	tree = createTree(data)
+	# Serialize Tree
+	serialized_tree = binTreeToBinary(tree)
+	length_of_tree = len(serialized_tree)//8	
+	print("Length of serialized Tree:",length_of_tree)
 
-		# Get zipped data
-		zipped = zipContent(tree,data)	
+	# Get zipped data
+	zipped = zipContent(tree,data)	
+	print("compressing length of zipped data:",len(zipped))
+
+	# Data alignment bits	
+	a = len(zipped)
+	data_align_bits = -(a-((a//8+1)*8))
+	print("Data alignment bits:",data_align_bits)
+	
 		
-		
-		
+	# Creating Output stream
+	zip_file = BitStream()
+	# Writing bits for alignment to be read
+	zip_file.write(data_align_bits.to_bytes(1,"big"))
+	# Putting actual alignment bits in stream
+	for i in range(data_align_bits):
+		zip_file.write(False) 
+
+	# Writing length of tree (2 bytes) ( len in bytes)
+	# Reverse is struct.unpack(">H",<2_bytes>)[0]
+	zip_file.write(length_of_tree.to_bytes(2,"big"))
+	# Planting acutal tree :)
+	zip_file.write(serialized_tree)
+
+	# And now the zipped data
+	zip_file.write(zipped)
+	
+	return zip_file.read(bytes)
+
+
+def decompressDataTree(tree,stream):
+	data = b""
+	cur_node = tree
+	while len(stream)>0:	
+		way_stone = stream.read(bool,1)[0]
+		if way_stone: # Go left
+			cur_node = cur_node.child1
+			if cur_node.letter:
+				data += cur_node.letter	
+				cur_node = tree
+		else:
+			cur_node = cur_node.child2
+			if cur_node.letter:
+				data += cur_node.letter
+				cur_node = tree
+	
+	return data
+	
+def uncompressData(data):
+	stream = BitStream(data)
+
+	_r_data = stream.read(bytes,1)
+	print("Reading one byte (align length)")
+	alignment_bits_len = int.from_bytes(_r_data,"big")
+
+	print("Reading ",alignment_bits_len,"bits (byte alignment)")
+	for i in range(alignment_bits_len):
+		# Means alignment bit is wrong
+		if stream.read(bool,1)[0] == True: 
+			print("ERROR OCCURED, Alignment bit was 1")
+	print("Reading two bytes (length of bin tree)")
+	bin_tree_length = struct.unpack(">H",stream.read(bytes,2))[0]
+	print("Length of binary tree")
+
+	tree_stream = stream.read(bin_tree_length*8)
+	tree = treeFromSerialized(tree_stream)
+	print("t.c1.c1.l",tree.child1.child1.letter)
+	
+	# Reading rest of data	
+	print("Reading rest of data")
+	zipped_data = stream.read()
+	print("Length of zpped data:",len(zipped_data))
+
+	plain_data = decompressDataTree(tree,zipped_data)
+	
+	return plain_data		
+	
+	
+	
+	
 
 def main():
 	try:
-		sample_file = sys.argv[1]
+		sample_file = sys.argv[2]
 	except:
 		exit("You have to supply file to be compressed.")
 	with open(sample_file,"rb") as f:
 		sample_file_contents = f.read()
-	
+	'''	
 	tree = createTree(sample_file_contents)
 	tree.display()
 	zipped = zipContent(tree,sample_file_contents)	
@@ -225,8 +301,21 @@ def main():
 	
 	desTree = treeFromSerialized(treeModel)
 	print(desTree.child1.child2.child1.letter)
+	'''
 
 	
+	if sys.argv[1] == "-c":
+		comp_data = compressData(sample_file_contents)
+		with open("out.lzip","wb") as f:
+			f.write(comp_data)
+
+	elif sys.argv[1] == "-d":
+		with open(sample_file,"rb") as f:
+			decomp_data = f.read()
+		plain_data = uncompressData(decomp_data)	
+		with open("plain_data.bin","wb") as f:
+			f.write(plain_data)
+		
 	
 if __name__ == "__main__":
 	main()
