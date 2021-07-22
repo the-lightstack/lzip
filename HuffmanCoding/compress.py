@@ -114,6 +114,7 @@ def zipContent(tree,data):
 	for i in data:
 		cleanWrite(zipped,tree.find(i))		
 
+	print("zipContent ",zipped)
 	return zipped
 
 def dindDeepness(tree):
@@ -230,7 +231,7 @@ def decompressDataTree(tree,stream):
 	cur_node = tree
 	while len(stream)>0:	
 		way_stone = stream.read(bool,1)[0]
-		if way_stone: # Go left
+		if not way_stone: # Go left
 			cur_node = cur_node.child1
 			if cur_node.letter:
 				data += cur_node.letter	
@@ -243,6 +244,7 @@ def decompressDataTree(tree,stream):
 	
 	return data
 	
+
 def uncompressData(data):
 	stream = BitStream(data)
 
