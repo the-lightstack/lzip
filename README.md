@@ -5,12 +5,14 @@
  - compression rates up to 87%! (normally around 50%) (and even more under unrealistic circumstances :) )
 
 # Format of lzip files
+```
 1 bytes - Magic Byte of lzip file \[0x23] [for checking if file is actual lzip]
 1 byte - length of following bit alignments
 n bits - bit alignments to fill up to full bytes
 2 bytes - Length of coming huffmann tree
 n bytes - The serialized huffmann tree [which holds bit - char assignment]
 n bytes - The actual encoded data using the tree
+```
 
 # Installation
 
