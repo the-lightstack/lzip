@@ -18,6 +18,7 @@ n bytes - The actual encoded data using the tree
 
 	git clone https://github.com/the-lightstack/lzip.git
 	sudo mv ./lzip/lzip /usr/bin
+	pip3 install bitstream
 
 
 # Usage 
@@ -39,4 +40,6 @@ n bytes - The actual encoded data using the tree
 
 
 # TODO 
- [X] Add `-o` parameter to define output file
+[X] Add `-o` parameter to define output file
+[ ] Fix failure when encountering null-bytes ( which prevents from zipping most non-text files)
+
