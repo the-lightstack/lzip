@@ -41,5 +41,6 @@ n bytes - The actual encoded data using the tree
 
 # TODO 
 [X] Add `-o` parameter to define output file
-[ ] Fix failure when encountering null-bytes ( which prevents from zipping most non-text files)
+[X] Fix failure when encountering null-bytes ( which prevents from zipping most non-text files)
+	>> Bytes stored as numbers, so null byte = 0; if 0 accidentally same as if None, so did direct comparision with None and fixed problem :)
 

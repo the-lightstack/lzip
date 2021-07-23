@@ -21,6 +21,7 @@ class Node:
 		# If it has no child nodes it is a bottom node ->
 		# it has to have a letter associated with it
 		self.letter = letter
+		#print(letter)
 	
 	def display(self):
 		if not self.letter:
@@ -37,7 +38,7 @@ class Node:
 			if self.letter == target:
 				Node.recursion_done = True
 				return 
-			if not self.letter:			
+			if self.letter == None:			
 				# Recursive Find, doesn't do setup
 				if not Node.recursion_done:
 					Node.current_traversal += "0"
@@ -145,7 +146,7 @@ def binTreeToBinary(tree):
 	node = tree # This is the root node
 	def recGenBinary(node):
 		# It is a leaf node
-		if node.letter:
+		if not node.letter == None:
 			serializedTree.write(True)	
 			serializedTree.write(node.letter.to_bytes(1,"big"))
 		else:
