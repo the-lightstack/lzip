@@ -6,7 +6,7 @@
 
 # Format of lzip files
 ```
-1 bytes - Magic Byte of lzip file \[0x23] [for checking if file is actual lzip]
+1 bytes - Magic Byte of lzip file [0x23] [for checking if file is actual lzip]
 1 byte - length of following bit alignments
 n bits - bit alignments to fill up to full bytes
 2 bytes - Length of coming huffmann tree
@@ -38,9 +38,14 @@ n bytes - The actual encoded data using the tree
 	lzip [-d/-c] <file> -o <filename>
 > Writes output to specified file
 
+# Compression Rates
+- Text files: ~ 50%
+- ELF-Binaries: ~ 35%
+- Images: ~ 2-5%
+
 
 # TODO 
-[X] Add `-o` parameter to define output file
-[X] Fix failure when encountering null-bytes ( which prevents from zipping most non-text files)
-	>> Bytes stored as numbers, so null byte = 0; if 0 accidentally same as if None, so did direct comparision with None and fixed problem :)
+
+- [x] Add `-o` parameter to define output file
+- [x] Fix failure when encountering null-bytes ( which prevents from zipping most non-text files)
 
