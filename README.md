@@ -1,4 +1,4 @@
-# Implementation of Huffman Coding/Huffman Tree in python
+# LZip - Just another Zip implementation
 
 # What's so great about it?
  - Also works on smaller files
