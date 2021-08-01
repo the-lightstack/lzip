@@ -15,10 +15,10 @@ n bytes - The actual encoded data using the tree
 ```
 
 # Installation
-
+	
 	git clone https://github.com/the-lightstack/lzip.git
 	sudo mv ./lzip/lzip /usr/bin
-	pip3 install bitstream
+	pip3 install -r requirements.txt
 
 
 # Usage 
